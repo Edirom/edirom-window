@@ -1,15 +1,22 @@
 class EdiromWindow extends HTMLElement {
+    
     constructor() {
+
         super();
+        
         // Create shadow DOM
         this.attachShadow({ mode: 'open' });
+
+        // Define the default properties
         this.width = '200px';
         this.height = "150px";
         this.zIndex = 9;
         this.position = "absolute";
         this.top = "0px";
         this.left = "0px";
-        const event2 = new CustomEvent('edirom-window-created', {
+
+        // Create custom event for the window creation
+        const event = new CustomEvent('edirom-window-created', {
             detail: {
                 position: this.position,
                 zIndex: this.zIndex,
@@ -19,8 +26,8 @@ class EdiromWindow extends HTMLElement {
                 left: this.left
               },
             bubbles: true
-            });
-        this.dispatchEvent(event2);
+        });
+        this.dispatchEvent(event);
 
         // Define the template
         this.shadowRoot.innerHTML = `
@@ -87,20 +94,37 @@ class EdiromWindow extends HTMLElement {
         this.originalMouseX = 0;
         this.originalMouseY = 0;
     }
+
+    // register the attributes to be observed
     static get observedAttributes() {
         return ['height', 'width','top', 'left', "zIndex"];
-    }    
+    }   
+    
+    // connected callback
+    connectedCallback() {
+        this.dragElement(this.shadowRoot.getElementById("mydiv"));
+        this.initResize();
+        
+        // Accessing elements from the main document
+        //this.shadowRoot.getElementById("ediromWindow1").style.display = 'none';
+
+        this.shadowRoot.getElementById("windowclose").addEventListener('click', this.close.bind(this));
+        this.shadowRoot.getElementById("mydiv").addEventListener('click', this.changeZindex.bind(this));
+
+    }
+
 
     // attribute change
     attributeChangedCallback(property, oldValue, newValue) {
 
-
-    const event = new CustomEvent('edirom-window-'+property+'-change', {
+        // Create custom event for when attribute is changed
+        const event = new CustomEvent('edirom-window-'+property+'-change', {
             detail: { [property]: newValue },
             bubbles: true
-            });
+        });
         this.dispatchEvent(event);
 
+        // switch for attribute changed
         switch(property) {
             case "height":
                 this.height = newValue
@@ -136,6 +160,7 @@ class EdiromWindow extends HTMLElement {
         console.log("my div is clicked ", this.shadowRoot.getElementById("mydiv").style.display)
         this.shadowRoot.getElementById("mydiv").style.display = 'none';
     }
+
     changeZindex(){
     //    // Create a new event, allowing for data to be passed
     //    let event = new CustomEvent('updateEvent', { 
@@ -162,27 +187,14 @@ class EdiromWindow extends HTMLElement {
                 }
             }
 
-// Set the z-index of the shadow DOM element in the current context
-this.shadowRoot.getElementById("mydiv").style.zIndex = '1';
+        // Set the z-index of the shadow DOM element in the current context
+        this.shadowRoot.getElementById("mydiv").style.zIndex = '1';
         
-
     }
 
     close() {
         console.log("close index is clicked")
         this.shadowRoot.getElementById("mydiv").remove();
-    }
-
-    connectedCallback() {
-        this.dragElement(this.shadowRoot.getElementById("mydiv"));
-        this.initResize();
-        
-        // Accessing elements from the main document
-        //this.shadowRoot.getElementById("ediromWindow1").style.display = 'none';
-
-        this.shadowRoot.getElementById("windowclose").addEventListener('click', this.close.bind(this));
-        this.shadowRoot.getElementById("mydiv").addEventListener('click', this.changeZindex.bind(this));
-
     }
 
     dragElement(elmnt) {
