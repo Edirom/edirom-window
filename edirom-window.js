@@ -15,20 +15,6 @@ class EdiromWindow extends HTMLElement {
         this.top = "0px";
         this.left = "0px";
 
-        // Create custom event for the window creation
-        const event = new CustomEvent('edirom-window-created', {
-            detail: {
-                position: this.position,
-                zIndex: this.zIndex,
-                width: this.width,
-                height: this.height,
-                top: this.top,
-                left: this.left
-              },
-            bubbles: true
-        });
-        this.dispatchEvent(event);
-
         // Define the template
         this.shadowRoot.innerHTML = `
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -110,6 +96,22 @@ class EdiromWindow extends HTMLElement {
 
         this.shadowRoot.getElementById("windowclose").addEventListener('click', this.close.bind(this));
         this.shadowRoot.getElementById("mydiv").addEventListener('click', this.changeZindex.bind(this));
+
+
+        // Create custom event for the window creation
+        const event = new CustomEvent('edirom-window-created', {
+            detail: {
+                position: this.position,
+                zIndex: this.zIndex,
+                width: this.width,
+                height: this.height,
+                top: this.top,
+                left: this.left
+              },
+            bubbles: true
+        });
+        this.dispatchEvent(event);
+
 
     }
 

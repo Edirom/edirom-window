@@ -105,19 +105,18 @@ class ShowToolbar extends HTMLElement {
                 newDiv.addEventListener('edirom-window-'+attribute+'-change', (e) => {
                     console.log("this window before change ", this.windows)
          
-
-
-                console.log('Event "edirom-window-'+attribute+'-change" for '+newDiv.id+'; '+attribute+'="'+e.detail[attribute])
-                for(var i=0; i<this.windows.length; i++){
-                    if (this.windows[i]["id"] == newDiv.id) {
-                        this.windows[i][attribute] = e.detail[attribute]
-                    }
-                }       
-            })})
+                    console.log('Event "edirom-window-'+attribute+'-change" for '+newDiv.id+'; '+attribute+'="'+e.detail[attribute]+'"')
+                    for(var i=0; i<this.windows.length; i++){
+                        if (this.windows[i]["id"] == newDiv.id) {
+                            this.windows[i][attribute] = e.detail[attribute]
+                        }
+                    }       
+                })
+            })
 
             newDiv.addEventListener('edirom-window-created', (e) => {
-                console.log('Event "edirom-window-created" for '+newDiv.id +'="'+e.detail)
-                } ) 
+                console.log('Event "edirom-window-created" for '+newDiv.id +'="'+JSON.stringify(e.detail));
+            }) 
             
             const newLabel = document.createElement('label');
             newLabel.htmlFor = "checkbox" + newId; 
