@@ -1,4 +1,5 @@
 class ShowToolbar extends HTMLElement {
+
     constructor() {
         super()
         this.attachShadow({mode: 'open'})
@@ -6,10 +7,14 @@ class ShowToolbar extends HTMLElement {
         this.windows = {}
 
     }
+
+
     static get observedAttributes() {
         return ['windows'];
     }    
-     render(){
+
+
+    render(){
                 this.shadowRoot.innerHTML = `
         <style>
         .checkbox-container {
@@ -53,69 +58,76 @@ class ShowToolbar extends HTMLElement {
     
           }
     }
+
     connectedCallback(){
         this.shadowRoot.getElementById("checkbox1").addEventListener('change', (event) => this.toggleVisibility('ediromWindow1', event));
         this.shadowRoot.getElementById("checkbox2").addEventListener('change', (event) => this.toggleVisibility('div2', event));
         this.shadowRoot.getElementById("createContent").addEventListener('click', ()=> this.createContent());   
     }
+
     createContent(window = ""){
  
             var newId = 1
             const ediromWindows = document.querySelectorAll("edirom-window");
-            const newDiv = document.createElement('edirom-window');
+            const newEdiromWindow = document.createElement('edirom-window');
     
             if(ediromWindows.length > 0){
-                 newId = ediromWindows.length + 1
-                newDiv.id = "ediromWindow" + newId;
+                newId = ediromWindows.length + 1
+                newEdiromWindow.id = "ediromWindow" + newId;
                 console.log("new window ", newId)
                 
             }else{
-                newDiv.id = "ediromWindow" + newId;
+                newEdiromWindow.id = "ediromWindow" + newId;
             }
             
     
-            newDiv.style.marginLeft = '20%';
-            //newDiv.class = "resizable-draggable-div";
-            newDiv.setAttribute("class", "resizable-draggable-div");
-            newDiv.display = "block";
-            newDiv.setAttribute("height", (window != "" ? window.height : ""))
-            newDiv.setAttribute("width", (window != "" ? window.width : ""))
-            newDiv.setAttribute("top", (window != "" ? window.top : ""))
-            newDiv.setAttribute("left", (window != "" ? window.left : ""))
-            newDiv.setAttribute("zIndex", (window != "" ? window.zIndex : ""))
+            newEdiromWindow.style.marginLeft = '20%';
+            //newEdiromWindow.class = "resizable-draggable-div";
+            newEdiromWindow.setAttribute("class", "resizable-draggable-div");
+            newEdiromWindow.display = "block";
+            newEdiromWindow.setAttribute("height", (window != "" ? window.height : ""))
+            newEdiromWindow.setAttribute("width", (window != "" ? window.width : ""))
+            newEdiromWindow.setAttribute("top", (window != "" ? window.top : ""))
+            newEdiromWindow.setAttribute("left", (window != "" ? window.left : ""))
+            newEdiromWindow.setAttribute("zIndex", (window != "" ? window.zIndex : ""))
             // if(window == "")
             // {
             //     console.log("this is windows " ,  this.windows)
             //     this.windows= {}
-            //     this.windows['id'] = newDiv.id 
-            //     this.windows['height'] = newDiv.height
-            //     this.windows['width'] = newDiv.width
-            //     this.windows['top'] = newDiv.top
-            //     this.windows['zIndex'] = newDiv.zIndex
+            //     this.windows['id'] = newEdiromWindow.id 
+            //     this.windows['height'] = newEdiromWindow.height
+            //     this.windows['width'] = newEdiromWindow.width
+            //     this.windows['top'] = newEdiromWindow.top
+            //     this.windows['zIndex'] = newEdiromWindow.zIndex
 
             // }
-            console.log("out first windows is ", this.windows)
+
+            console.log("our first windows is ", this.windows);
     
     
-            console.log("the new div is ", newDiv)
-            this.parentNode.insertBefore(newDiv, this.nextSibling);
+            console.log("the new div is ", newEdiromWindow);
+
+            this.parentNode.insertBefore(newEdiromWindow, this.nextSibling);
     
-            newDiv.getAttributeNames().forEach(attribute => {
+
+            // event listener for attribute changes of the new custom element
+            newEdiromWindow.getAttributeNames().forEach(attribute => {
                 // Adding event listeners for changes in the web component
-                newDiv.addEventListener('edirom-window-'+attribute+'-change', (e) => {
+                newEdiromWindow.addEventListener('edirom-window-'+attribute+'-change', (e) => {
                     console.log("this window before change ", this.windows)
          
-                    console.log('Event "edirom-window-'+attribute+'-change" for '+newDiv.id+'; '+attribute+'="'+e.detail[attribute]+'"')
+                    console.log('Event "edirom-window-'+attribute+'-change" for '+newEdiromWindow.id+'; '+attribute+'="'+e.detail[attribute]+'"')
                     for(var i=0; i<this.windows.length; i++){
-                        if (this.windows[i]["id"] == newDiv.id) {
+                        if (this.windows[i]["id"] == newEdiromWindow.id) {
                             this.windows[i][attribute] = e.detail[attribute]
                         }
                     }       
                 })
             })
 
-            newDiv.addEventListener('edirom-window-created', (e) => {
-                console.log('Event "edirom-window-created" for '+newDiv.id +'="'+JSON.stringify(e.detail));
+            // event listener for the creation of the new custom element
+            newEdiromWindow.addEventListener('edirom-window-created', (e) => {
+                console.log('Event "edirom-window-created" for '+newEdiromWindow.id +'="'+JSON.stringify(e.detail));
             }) 
             
             const newLabel = document.createElement('label');
@@ -138,7 +150,7 @@ class ShowToolbar extends HTMLElement {
             console.log("This is the window check box", this.shadowRoot.getElementById("showhide"));
             
     
-           // this.shadowRoot.appendChild(newDiv)
+           // this.shadowRoot.appendChild(newEdiromWindow)
 
     }
 
