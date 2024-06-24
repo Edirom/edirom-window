@@ -107,8 +107,11 @@ class ShowToolbar extends HTMLElement {
     
             console.log("the new div is ", newEdiromWindow);
 
-            this.parentNode.insertBefore(newEdiromWindow, this.nextSibling);
-    
+
+            // event listener for listening to the creation (DOM-insertion) of the new custom element
+            newEdiromWindow.addEventListener('edirom-window-created', (e) => {
+                console.log('Event "edirom-window-created" for '+newEdiromWindow.id +'="'+JSON.stringify(e.detail));
+            }) 
 
             // event listener for attribute changes of the new custom element
             newEdiromWindow.getAttributeNames().forEach(attribute => {
@@ -125,10 +128,9 @@ class ShowToolbar extends HTMLElement {
                 })
             })
 
-            // event listener for the creation of the new custom element
-            newEdiromWindow.addEventListener('edirom-window-created', (e) => {
-                console.log('Event "edirom-window-created" for '+newEdiromWindow.id +'="'+JSON.stringify(e.detail));
-            }) 
+            // insert the new custom element into the DOM
+            this.parentNode.insertBefore(newEdiromWindow, this.nextSibling);
+    
             
             const newLabel = document.createElement('label');
             newLabel.htmlFor = "checkbox" + newId; 
