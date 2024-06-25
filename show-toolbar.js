@@ -1,21 +1,26 @@
 class ShowToolbar extends HTMLElement {
 
     constructor() {
+
         super()
         this.attachShadow({mode: 'open'})
+
+        // render content
         this.render()
+
+        // property to store the windows config as JSON
         this.windows = {}
 
     }
 
-
+    // register the attributes to be observed
     static get observedAttributes() {
         return ['windows'];
     }    
 
 
     render(){
-                this.shadowRoot.innerHTML = `
+        this.shadowRoot.innerHTML = `
         <style>
         .checkbox-container {
             margin-top: 10px;
@@ -67,24 +72,15 @@ class ShowToolbar extends HTMLElement {
 
     createContent(window = ""){
  
-            var newId = 1
             const ediromWindows = document.querySelectorAll("edirom-window");
-            const newEdiromWindow = document.createElement('edirom-window');
+            const newEdiromWindow = document.createElement('edirom-window');      
     
-            if(ediromWindows.length > 0){
-                newId = ediromWindows.length + 1
-                newEdiromWindow.id = "ediromWindow" + newId;
-                console.log("new window ", newId)
-                
-            }else{
-                newEdiromWindow.id = "ediromWindow" + newId;
-            }
-            
-    
-            newEdiromWindow.style.marginLeft = '20%';
-            //newEdiromWindow.class = "resizable-draggable-div";
+            newEdiromWindow.id = "ediromWindow" + ediromWindows.length;  
             newEdiromWindow.setAttribute("class", "resizable-draggable-div");
+            newEdiromWindow.style.marginLeft = '20%';
             newEdiromWindow.display = "block";
+
+            // set attributes according to supplied config
             newEdiromWindow.setAttribute("height", (window != "" ? window.height : ""))
             newEdiromWindow.setAttribute("width", (window != "" ? window.width : ""))
             newEdiromWindow.setAttribute("top", (window != "" ? window.top : ""))
@@ -102,24 +98,17 @@ class ShowToolbar extends HTMLElement {
 
             // }
 
-            console.log("our first windows is ", this.windows);
-    
-    
-            console.log("the new div is ", newEdiromWindow);
-
 
             // event listener for listening to the creation (DOM-insertion) of the new custom element
             newEdiromWindow.addEventListener('edirom-window-created', (e) => {
-                console.log('Event "edirom-window-created" for '+newEdiromWindow.id +'="'+JSON.stringify(e.detail));
+                console.log('Event "edirom-window-created": '+JSON.stringify(e.detail));
             }) 
 
             // event listener for attribute changes of the new custom element
             newEdiromWindow.getAttributeNames().forEach(attribute => {
                 // Adding event listeners for changes in the web component
-                newEdiromWindow.addEventListener('edirom-window-'+attribute+'-change', (e) => {
-                    console.log("this window before change ", this.windows)
-         
-                    console.log('Event "edirom-window-'+attribute+'-change" for '+newEdiromWindow.id+'; '+attribute+'="'+e.detail[attribute]+'"')
+                newEdiromWindow.addEventListener('edirom-window-'+attribute+'-change', (e) => {         
+                    console.log('Event "edirom-window-'+attribute+'-change": '+JSON.stringify(e.detail));
                     for(var i=0; i<this.windows.length; i++){
                         if (this.windows[i]["id"] == newEdiromWindow.id) {
                             this.windows[i][attribute] = e.detail[attribute]
@@ -131,40 +120,6 @@ class ShowToolbar extends HTMLElement {
             // insert the new custom element into the DOM
             this.parentNode.insertBefore(newEdiromWindow, this.nextSibling);
     
-            
-            const newLabel = document.createElement('label');
-            newLabel.htmlFor = "checkbox" + newId; 
-            
-            const newInput = document.createElement('input');
-            newInput.type = "checkbox";
-            newInput.id = "windowCheck" + newId; 
-            newInput.name = "Show or Hide window " + newId;
-    
-            const newBreak = document.createElement('br');
-    
-            const labelText = document.createTextNode("Window " + newId); // Create a text node for the label
-            newLabel.appendChild(newBreak); 
-            newLabel.appendChild(labelText); 
-            newLabel.appendChild(newInput); 
-            this.parentNode.insertBefore(newInput, this.nextSibling);
-    
-            
-            console.log("This is the window check box", this.shadowRoot.getElementById("showhide"));
-            
-    
-           // this.shadowRoot.appendChild(newEdiromWindow)
-
-    }
-
-    toggleVisibility(divId, event) {
-        const div = document.getElementById(divId); // Query main DOM
-
-        console.log("div id is " + divId)
-        if (div) {
-                            console.log("display is " + div.style.display)
-            
-            div.style.display = event.target.checked ? 'block' : 'none';
-        }
     }
 
 
