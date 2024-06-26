@@ -5,7 +5,7 @@ class EdiromWindows extends HTMLElement {
         super();
 
         // Define the default properties
-        this.windows = {};
+        this.windows = [ ];
         
         // Create shadow DOM
         this.attachShadow({ mode: 'open' });
@@ -16,14 +16,30 @@ class EdiromWindows extends HTMLElement {
         winboxScript.src = "https://rawcdn.githack.com/nextapps-de/winbox/0.2.82/dist/js/winbox.min.js";
         winboxScript.defer = true;
         this.shadowRoot.appendChild(winboxScript);
+
+        // add the winbox css
+        const winboxCss = document.createElement('link');
+        winboxCss.rel = "stylesheet";
+        winboxCss.href = "https://rawcdn.githack.com/nextapps-de/winbox/0.2.82/dist/css/winbox.min.css";
+        this.shadowRoot.appendChild(winboxCss);
         
+
+
 
         // When the winbox library is loaded
         winboxScript.onload = () => {
 
-            // Create the windows
+            // loop through the windows array
             for(var i=0; i<this.windows.length; i++){
-                this.add(this.windows[i]);
+
+                // add the window to the global windows property
+                //this.windows.push(windows[i]);
+
+                // add root key
+                this.windows[i].root = this.shadowRoot;
+
+                // Create the window
+                new WinBox( this.windows[i] );
             }
 
         }
@@ -33,14 +49,14 @@ class EdiromWindows extends HTMLElement {
 
     // register the attributes to be observed
     static get observedAttributes() {
-        return ['windows', 'add-window', 'remove-window'];
+        return ['set', 'add', 'remove'];
     }   
     
 
     // connected callback
     connectedCallback() {
 
-        
+
 
     }
 
@@ -50,24 +66,24 @@ class EdiromWindows extends HTMLElement {
 
         // Custom event for the attribute change
         const event = new CustomEvent('communicate-'+property+'-update', {
-            detail: { [property]: newPropertyValue },
+            detail: { [property]: newValue },
             bubbles: true
         });
         this.dispatchEvent(event);
 
         // Check the property
         switch(property) {
-            case "windows":
-                if (newValue != ""){
-                    this.init(JSON.parse(newValue));
-                }
-                break;
-            case "add-window":
+            case "set":
                 if (newValue != ""){
                     this.add(JSON.parse(newValue));
                 }
                 break;
-            case "remove-window":
+            case "add":
+                if (newValue != ""){
+                    this.add(JSON.parse(newValue));
+                }
+                break;
+            case "remove":
                 if (newValue != ""){
                     this.remove(newValue);
                 }
@@ -78,48 +94,33 @@ class EdiromWindows extends HTMLElement {
         
     }
 
-    init(windows){
-
-        // clear the existing windows
-        for(var i=0; i<this.windows.length; i++){
-            this.remove(this.windows[i].id);
-        }
-
-        // Parse the JSON
-        this.windows = windows;
-
-        // Create the windows
-        for(var i=0; i<this.windows.length; i++){
-            this.add(this.windows[i]);
-        }
-
-    }
-
-    // Create a new window
-    add(window){
-
-        // add the window to the windows array
-        this.windows.push(window);
-
-        // Create the window
-        const wb = new WinBox(windowConfig);
-
-    }
-
-    // Remove a window
-    remove(windowId){
-
-        // remove the window from the windows array
-        this.windows = this.windows.filter(window => window.id !== windowId);
-
-        // Get the window
-        const wb = WinBox.instances.get(windowId);
-
-        // Close the window
-        wb.close();
-
-    }
     
+    // add a window
+    add(windows){
+
+        // loop through the windows array
+        for(var i=0; i<windows.length; i++){
+
+            // add the window to the global windows property
+            this.windows.push(windows[i]);
+
+            // add root key
+            windows[i].root = this.shadowRoot;
+
+            // Create the window
+            const wb = new WinBox( windows[i] );
+
+        }
+    }
+
+    // remove a window
+    remove(id){
+
+        this.shadowRoot.getElementById(id).remove();
+
+    }
+
+
 }
 
 // Define the custom element
