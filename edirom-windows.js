@@ -48,6 +48,14 @@ class EdiromWindows extends HTMLElement {
     // attribute change
     attributeChangedCallback(property, oldValue, newValue) {
 
+        // Custom event for the attribute change
+        const event = new CustomEvent('communicate-'+property+'-update', {
+            detail: { [property]: newPropertyValue },
+            bubbles: true
+        });
+        this.dispatchEvent(event);
+
+        // Check the property
         switch(property) {
             case "windows":
                 if (newValue != ""){
@@ -95,13 +103,6 @@ class EdiromWindows extends HTMLElement {
 
         // Create the window
         const wb = new WinBox(windowConfig);
-
-        // Custom event for the window creation
-        const event = new CustomEvent('edirom-window-created', {
-            detail: windowConfig,
-            bubbles: true
-        });
-        this.dispatchEvent(event);
 
     }
 
