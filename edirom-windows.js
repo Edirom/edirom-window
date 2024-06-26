@@ -6,6 +6,11 @@ class EdiromWindows extends HTMLElement {
 
         // Define the default properties
         this.windows = [ ];
+        this.windowsDefaults = {
+            border: "0.3em",
+            background: "#ccc"
+        }
+
         
         // Create shadow DOM
         this.attachShadow({ mode: 'open' });
@@ -22,8 +27,6 @@ class EdiromWindows extends HTMLElement {
         winboxCss.rel = "stylesheet";
         winboxCss.href = "https://rawcdn.githack.com/nextapps-de/winbox/0.2.82/dist/css/winbox.min.css";
         this.shadowRoot.appendChild(winboxCss);
-        
-
 
 
         // When the winbox library is loaded
@@ -32,8 +35,12 @@ class EdiromWindows extends HTMLElement {
             // loop through the windows array
             for(var i=0; i<this.windows.length; i++){
 
-                // add the window to the global windows property
-                //this.windows.push(windows[i]);
+                // add the default properties
+                for (var key in this.windowsDefaults) {
+                    if (!this.windows[i].hasOwnProperty(key)) {
+                        this.windows[i][key] = this.windowsDefaults[key];
+                    }
+                }
 
                 // add root key
                 this.windows[i].root = this.shadowRoot;
@@ -74,6 +81,10 @@ class EdiromWindows extends HTMLElement {
         // Check the property
         switch(property) {
             case "set":
+                //remove all winbox windows from DOM
+                this.shadowRoot.querySelectorAll('.winbox').forEach(e => e.remove());
+
+                // add the new windows
                 if (newValue != ""){
                     this.add(JSON.parse(newValue));
                 }
@@ -101,6 +112,13 @@ class EdiromWindows extends HTMLElement {
         // loop through the windows array
         for(var i=0; i<windows.length; i++){
 
+            // add the default properties
+            for (var key in this.windowsDefaults) {
+                if (!windows[i].hasOwnProperty(key)) {
+                    windows[i][key] = this.windowsDefaults[key];
+                }
+            }
+
             // add the window to the global windows property
             this.windows.push(windows[i]);
 
@@ -116,10 +134,15 @@ class EdiromWindows extends HTMLElement {
     // remove a window
     remove(id){
 
+        // remove the window from the global windows property
+        this.windows = this.windows.filter(function( obj ) {
+            return obj.id !== id;
+        });
+
+        // remove the window from the DOM
         this.shadowRoot.getElementById(id).remove();
 
     }
-
 
 }
 
