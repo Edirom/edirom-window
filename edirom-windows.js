@@ -39,7 +39,8 @@ class EdiromWindows extends HTMLElement {
                 this.windows[i].root = this.shadowRoot;
 
                 // Create the window
-                new WinBox(this.windows[i]);
+                const wb = new WinBox( this.windows[i] );
+                console.log("Created WinBox with id '" + wb.id+"'");
             }
 
 
