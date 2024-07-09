@@ -55,7 +55,7 @@ class EdiromWindows extends HTMLElement {
     // Attribute change
     attributeChangedCallback(property, oldValue, newValue) {
         // Custom event for the attribute change
-        const event = new CustomEvent('communicate-' + property + '-update', {
+        const event = new CustomEvent('communicate-windows-' + property, {
             detail: { [property]: newValue },
             bubbles: true
         });
@@ -138,18 +138,33 @@ class EdiromWindows extends HTMLElement {
 
         // Case 1: update all the windows with the same values eg. arranging the windows,
         // windows =  [{"height": "95%"}]
-        // Case 2: Update each window with different values
 
+
+        // Case 2: Update each window with different values
 
         // Loop through the json string sent to update function
         for (var i = 0; i < windows.length; i++) {
-            // Loop through all the existing editom windows
+            // Check if there is an id
+            if (!windows[i].hasOwnProperty("id")) {
+                console.error("Property 'id' missing in update statement: "+JSON.stringify(windows[i]));
+                return;
+            }
+            // Loop through all the existing edirom windows
             for (var j = 0; j < this.windows.length; j++) {
+                
                 // Check if the id of the input json string is the same as this.windows
                 if (windows[i]["id"] == this.windows[j]["id"]) {
                     for (var key in windows[i]) {
                         this.windows[j][key] = windows[i][key];
                     }
+
+                    // TODO: update the window with the new values
+                    
+                    // remove the window from the DOM
+                    //this.remove(windows[i]["id"]);
+
+                    // add the window to the DOM
+                    //this.add([this.windows[j]]);
                 }
             }
         }
