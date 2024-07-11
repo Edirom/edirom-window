@@ -6,6 +6,12 @@ The component uses a [fork](https://github.com/daniel-jettka/winbox) of the [Win
 Note: This repository only contains the bare JavaScript-based component, there is a separate [demo suite](https://github.com/Edirom/edirom-web-components-demonstrator) for web components developed in the Edirom Online Reloaded project, where the component can be seen and tested.
 
 
+## License
+
+The edirom-windows.js comes with the license MIT. 
+The imported winbox library comes with the license Apache-2.0.
+
+
 ## How to use this web component
 
 1. Clone the repository into a directory of your choice
