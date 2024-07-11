@@ -1,3 +1,5 @@
+![GitHub License](https://img.shields.io/github/license/Edirom/edirom-window)
+
 # Edirom Windows Web Component
 
 This web component displays and creates new windows using the winbox library. It is intended to be used in tbe Edirom Online, but can also be (re-)used in other web applications. No compilation or building is necessary to use the web component. 
