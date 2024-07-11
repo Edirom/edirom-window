@@ -13,14 +13,14 @@ class EdiromWindows extends HTMLElement {
 
         // Load the winbox library
         const winboxScript = document.createElement('script');
-        winboxScript.src = "https://rawcdn.githack.com/nextapps-de/winbox/0.2.82/dist/js/winbox.min.js";
+        winboxScript.src = "https://rawcdn.githack.com/daniel-jettka/winbox/0.2.82/dist/js/winbox.min.js";
         winboxScript.defer = true;
         this.shadowRoot.appendChild(winboxScript);
 
         // Add the winbox css
         const winboxCss = document.createElement('link');
         winboxCss.rel = "stylesheet";
-        winboxCss.href = "https://rawcdn.githack.com/nextapps-de/winbox/0.2.82/dist/css/winbox.min.css";
+        winboxCss.href = "https://rawcdn.githack.com/daniel-jettka/winbox/0.2.82/dist/css/winbox.min.css";
         this.shadowRoot.appendChild(winboxCss);
 
 
