@@ -6,45 +6,49 @@ class EdiromWindows extends HTMLElement {
         this.windows = [];
         this.windowsDefaults = {
             border: "0.3em",
-            background: "#ccc"
+            background: "#ccc",
+            index: 100000
         }
+        this.winboxLoaded = false;
+        this.pendingWindows = [];
+
         // Create shadow DOM
         this.attachShadow({ mode: 'open' });
 
-        // Load the winbox library
-        const winboxScript = document.createElement('script');
-        winboxScript.src = "https://rawcdn.githack.com/daniel-jettka/winbox/0.2.82/dist/js/winbox.min.js";
-        winboxScript.defer = true;
-        this.shadowRoot.appendChild(winboxScript);
+        // :host must be a block-level fixed layer covering the viewport.
+        // The inner _container div is the actual WinBox root; ShadowRoot itself
+        // is not an HTMLElement and lacks offsetLeft/clientWidth that WinBox needs.
+        const hostStyle = document.createElement('style');
+        hostStyle.textContent = `:host {
+            display: block;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 99999;
+        }
+        #winbox-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .winbox {
+            pointer-events: auto;
+            /* Override WinBox's async-loaded CSS: position relative to
+               #winbox-container (which covers the full viewport), so the
+               window is visible immediately without waiting for the CDN link. */
+            position: absolute !important;
+        }`;
+        this.shadowRoot.appendChild(hostStyle);
 
-        // Add the winbox css
-        const winboxCss = document.createElement('link');
-        winboxCss.rel = "stylesheet";
-        winboxCss.href = "https://rawcdn.githack.com/daniel-jettka/winbox/0.2.82/dist/css/winbox.min.css";
-        this.shadowRoot.appendChild(winboxCss);
+        // Real HTMLElement container — passed as WinBox `root` so dimension
+        // queries (offsetLeft, clientWidth, etc.) resolve correctly.
+        this._container = document.createElement('div');
+        this._container.id = 'winbox-container';
+        this.shadowRoot.appendChild(this._container);
 
-
-        // When the winbox library is loaded
-        winboxScript.onload = () => {
-            // Loop through the windows array
-            for (var i = 0; i < this.windows.length; i++) {
-                // Add the default properties
-                for (var key in this.windowsDefaults) {
-                    if (!this.windows[i].hasOwnProperty(key)) {
-                        this.windows[i][key] = this.windowsDefaults[key];
-                    }
-                }
-
-                // Add root key
-                this.windows[i].root = this.shadowRoot;
-
-                // Create the window
-                const wb = new WinBox( this.windows[i] );
-                console.log("Created WinBox with id '" + wb.id+"'");
-            }
-
-
-        };
+        this._ensureWinboxAssets();
     }
 
     // Register the attributes to be observed
@@ -64,8 +68,12 @@ class EdiromWindows extends HTMLElement {
         // Check the property
         switch (property) {
             case "set":
-                // Remove all winbox windows from DOM
-                this.shadowRoot.querySelectorAll('.winbox').forEach(e => e.remove());
+                // Remove all managed winbox windows from DOM
+                this.windows.forEach((w) => {
+                    var el = this.shadowRoot.getElementById(w.id);
+                    if (el) el.remove();
+                });
+                this.windows = [];
 
                 // Add the new windows
                 if (newValue != "") {
@@ -111,11 +119,94 @@ class EdiromWindows extends HTMLElement {
             // Add the window to the global windows property
             this.windows.push(windows[i]);
 
-            // Add root key
-            windows[i].root = this.shadowRoot;
+            // If WinBox isn't available yet, queue it for creation later
+            if (!this.winboxLoaded || typeof WinBox === 'undefined') {
+                this.pendingWindows.push(windows[i]);
+                continue;
+            }
 
-            // Create the window
+            // Render window inside the shadow DOM container
+            windows[i].root = this._container;
             new WinBox(windows[i]);
+        }
+    }
+
+    _createPendingWindows() {
+        if (!this.winboxLoaded || typeof WinBox === 'undefined') {
+            return;
+        }
+
+        while (this.pendingWindows.length > 0) {
+            const winConfig = this.pendingWindows.shift();
+            winConfig.root = this._container;
+            new WinBox(winConfig);
+        }
+    }
+
+    _ensureWinboxAssets() {
+        const scriptSrc = "https://rawcdn.githack.com/daniel-jettka/winbox/0.2.82/dist/js/winbox.min.js";
+        const cssHref = "https://rawcdn.githack.com/daniel-jettka/winbox/0.2.82/dist/css/winbox.min.css";
+        const ediromStyleId = "edirom-winbox-overrides";
+
+        // Mirror all Edirom compiled stylesheets from the document into the shadow root
+        // so that classes like .textViewContent are available inside the shadow DOM.
+        document.querySelectorAll('link[rel="stylesheet"]').forEach((docLink) => {
+            const href = docLink.getAttribute('href');
+            if (href && !this.shadowRoot.querySelector(`link[href='${href}']`)) {
+                const shadowLink = document.createElement('link');
+                shadowLink.rel = 'stylesheet';
+                shadowLink.href = href;
+                this.shadowRoot.appendChild(shadowLink);
+            }
+        });
+
+        if (!document.querySelector(`script[src='${scriptSrc}']`)) {
+            const winboxScript = document.createElement('script');
+            winboxScript.src = scriptSrc;
+            winboxScript.onload = () => {
+                this.winboxLoaded = true;
+                this._createPendingWindows();
+            };
+            winboxScript.onerror = () => {
+                console.error('Failed to load WinBox script:', scriptSrc);
+            };
+            document.head.appendChild(winboxScript);
+        } else {
+            const existingScript = document.querySelector(`script[src='${scriptSrc}']`);
+            if (typeof WinBox !== 'undefined') {
+                this.winboxLoaded = true;
+                this._createPendingWindows();
+            } else if (existingScript) {
+                existingScript.addEventListener('load', () => {
+                    this.winboxLoaded = true;
+                    this._createPendingWindows();
+                });
+            }
+        }
+
+        // WinBox CSS must live inside the shadow root so it can style shadow-DOM nodes
+        if (!this.shadowRoot.querySelector(`link[href='${cssHref}']`)) {
+            const winboxCss = document.createElement('link');
+            winboxCss.rel = 'stylesheet';
+            winboxCss.href = cssHref;
+            this.shadowRoot.appendChild(winboxCss);
+        }
+
+        // Inject Edirom-matching overrides for WinBox appearance into the shadow root
+        if (!this.shadowRoot.getElementById(ediromStyleId)) {
+            const style = document.createElement('style');
+            style.id = ediromStyleId;
+            style.textContent = `
+                .winbox { box-shadow: 0 3px 10px #000; font-family: "PT Sans", Arial, sans-serif; }
+                .winbox .wb-title { color: #333; font-size: 13px; font-weight: bold; text-shadow: none; }
+                .winbox .wb-body { background: #fff; overflow: auto; }
+                .winbox .textViewContent { color: #333; }
+                .winbox .textViewContent h1 { font-weight: bold; font-size: 1.3em; }
+                .winbox .textViewContent h2 { font-weight: bold; font-size: 1.1em; margin-top: 1em; }
+                .winbox .textViewContent p { margin: 0.5em 0; line-height: 1.5; }
+                .winbox .textViewContent a { color: #336699; }
+            `;
+            this.shadowRoot.appendChild(style);
         }
     }
 
@@ -126,11 +217,11 @@ class EdiromWindows extends HTMLElement {
             return obj.id !== id;
         });
 
-        // Remove the window from the DOM
+        // Remove the window from the shadow root
         const element = this.shadowRoot.getElementById(id);
         if (element) {
             element.remove();
-        }   
+        }
     }
 
     // Update windows
@@ -172,8 +263,8 @@ class EdiromWindows extends HTMLElement {
     }
 
     arrange(type){
-            // Log all top-level div elements inside the shadow root
-            var topLevelDivs = Array.from(this.shadowRoot.querySelectorAll('.winbox'));
+            // Get all managed winbox windows from the shadow root
+            var topLevelDivs = this.windows.map((w) => { return this.shadowRoot.getElementById(w.id); }).filter(Boolean);
             var screenWidth = screen.width;
             var screenHeight = screen.height;
 
@@ -208,4 +299,5 @@ class EdiromWindows extends HTMLElement {
 
 // Define the custom element
 customElements.define('edirom-windows', EdiromWindows);
+
 
