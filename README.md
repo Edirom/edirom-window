@@ -37,4 +37,19 @@ The window definition mentioned below are based on the available [WinBox options
 | set       | json   | initiating windows (removing all existing ones); array of window definitions: `[{"title": "Window title", "html": "<h1>Window heading</h1><p>Lorem ipsum</p>"}, ... ]` | |
 | add       | json   | adding windows (keeping all existing ones); array of window definitions: `[{"title": "Window title", "html": "<h1>Window heading</h1><p>Lorem ipsum</p>"}, ... ]` | |
 | remove    | string | id of an existing window that will be removed (normally sth like "winbox-1") | |
-| arrange   | string | arranging open windows on available screen; available options/values: horizontal, vertical | |
+| arrange   | string | arranging open windows inside the component; values: `horizontal`, `vertical`, `grid` | |
+
+### Slot
+
+`content` supplies HTML used when a window definition has no `html` of its own.
+
+### Events
+
+| Event | detail | When |
+|---|---|---|
+| `window-focused` | `{ id }` | A window is focused. |
+| `window-closed` | `{ id }` | A window closes. |
+| `window-minimized` | `{ id }` | A window is minimised. |
+| `communicate-windows-set` and the same pattern for `add`, `remove`, `update`, `arrange` | attribute value | An attribute changes. |
+
+WinBox header controls are keyboard buttons (Enter and Space). The library itself is Apache-2.0 and is loaded from the existing fork URL. It is not copied into this repository.

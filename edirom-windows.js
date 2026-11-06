@@ -48,6 +48,11 @@ class EdiromWindows extends HTMLElement {
         this._container.id = 'winbox-container';
         this.shadowRoot.appendChild(this._container);
 
+        this._contentSlot = document.createElement('slot');
+        this._contentSlot.name = 'content';
+        this._contentSlot.style.display = 'none';
+        this.shadowRoot.appendChild(this._contentSlot);
+
         this._ensureWinboxAssets();
     }
 
@@ -127,8 +132,70 @@ class EdiromWindows extends HTMLElement {
 
             // Render window inside the shadow DOM container
             windows[i].root = this._container;
-            new WinBox(windows[i]);
+            if (!windows[i].html) {
+                windows[i].html = this._slotHtml();
+            }
+            this._bindWindowEvents(windows[i]);
+            var created = new WinBox(windows[i]);
+            this._decorate(created);
         }
+    }
+
+    _slotHtml() {
+        if (!this._contentSlot) return '';
+        return this._contentSlot.assignedNodes().map(function (node) {
+            return node.outerHTML || node.textContent || '';
+        }).join('');
+    }
+
+    _emit(name, id) {
+        this.dispatchEvent(new CustomEvent(name, {
+            bubbles: true,
+            composed: true,
+            detail: { id: id }
+        }));
+    }
+
+    _bindWindowEvents(config) {
+        var host = this;
+        var id = config.id;
+        var previous = {
+            onfocus: config.onfocus,
+            onclose: config.onclose,
+            onminimize: config.onminimize
+        };
+        config.onfocus = function () {
+            host._emit('window-focused', id || this.id);
+            if (previous.onfocus) return previous.onfocus.apply(this, arguments);
+        };
+        config.onclose = function () {
+            host._emit('window-closed', id || this.id);
+            if (previous.onclose) return previous.onclose.apply(this, arguments);
+        };
+        config.onminimize = function () {
+            host._emit('window-minimized', id || this.id);
+            if (previous.onminimize) return previous.onminimize.apply(this, arguments);
+        };
+    }
+
+    _decorate(winbox) {
+        if (!winbox || !winbox.body) return;
+        var frame = winbox.body.parentElement;
+        if (!frame) return;
+        var labels = { min: 'Minimise', max: 'Maximise', close: 'Close' };
+        ['wb-min', 'wb-max', 'wb-close'].forEach(function (className) {
+            var control = frame.querySelector('.' + className);
+            if (!control) return;
+            control.setAttribute('role', 'button');
+            control.tabIndex = 0;
+            control.setAttribute('aria-label', labels[className.replace('wb-', '')]);
+            control.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    control.click();
+                }
+            });
+        });
     }
 
     _createPendingWindows() {
@@ -139,7 +206,9 @@ class EdiromWindows extends HTMLElement {
         while (this.pendingWindows.length > 0) {
             const winConfig = this.pendingWindows.shift();
             winConfig.root = this._container;
-            new WinBox(winConfig);
+            if (!winConfig.html) winConfig.html = this._slotHtml();
+            this._bindWindowEvents(winConfig);
+            this._decorate(new WinBox(winConfig));
         }
     }
 
@@ -269,18 +338,29 @@ class EdiromWindows extends HTMLElement {
             var screenHeight = screen.height;
 
 
-            var contentWidth = screenWidth * 0.8
-            var contentHeight = screenHeight * 0.85
-            var gridWidth = contentWidth / topLevelDivs.length
-            var gridHeight = contentHeight / topLevelDivs.length
+            var bounds = this._container.getBoundingClientRect();
+            var contentWidth = bounds.width || screenWidth * 0.8;
+            var contentHeight = bounds.height || screenHeight * 0.85;
+            var count = Math.max(topLevelDivs.length, 1);
+            var gridWidth = contentWidth / count;
+            var gridHeight = contentHeight / count;
+            var cols = Math.ceil(Math.sqrt(count));
+            var rows = Math.ceil(count / cols);
 
             topLevelDivs.forEach((div, index) => {
-                if(type == "vertical") {
+                if(type == "grid") {
+                    var column = index % cols;
+                    var row = Math.floor(index / cols);
+                    div.style.width = (contentWidth / cols - 8) + "px";
+                    div.style.height = (contentHeight / rows - 8) + "px";
+                    div.style.left = column * (contentWidth / cols) + "px";
+                    div.style.top = row * (contentHeight / rows) + "px";
+                } else if(type == "vertical") {
                     div.style.width = gridWidth+"px" ;
                     div.style.left = index * gridWidth + "px"
                     div.style.top = 0
                     div.style.height = "95%"
-                } if(type == "horizontal") {
+                } else if(type == "horizontal") {
                     div.style.height = gridHeight+"px"
                     div.style.top = index * gridHeight + "px"
                     div.style.left = 0
